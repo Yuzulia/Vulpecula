@@ -11,7 +11,7 @@ const configure = async () => {
     try {
         const rawConfigArray = await Deno.readFile('vulpecula.toml');
         const rawConfig = new TextDecoder().decode(rawConfigArray);
-        return parse(rawConfig) as IVulpeculaConfig;
+        return parse(rawConfig) as unknown as IVulpeculaConfig;
     } catch (e) {
         // TODO: ファイル読み込みエラーとかのハンドリング
         throw e;
