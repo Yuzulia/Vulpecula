@@ -4,6 +4,14 @@ export interface IVulpeculaConfig {
     server: {
         csrf_secret: string;
         cookie_secure: boolean;
+    },
+    database: {
+        hostname: string;
+        port: number;
+        user: string;
+        password: string;
+        name: string;
+        tls: boolean;
     }
 }
 

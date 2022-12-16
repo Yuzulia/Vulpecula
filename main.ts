@@ -9,5 +9,11 @@ import manifest from "./fresh.gen.ts";
 
 import twindPlugin from "$fresh/plugins/twind.ts";
 import twindConfig from "./twind.config.ts";
+import { Account } from "./db/models/account.ts";
+import { db } from "./db/client.ts";
+
+db.link([
+    Account,
+]);
 
 await start(manifest, { plugins: [twindPlugin(twindConfig)] });
