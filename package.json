@@ -1,0 +1,32 @@
+{
+  "name": "@yuzulia/vulpecula",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "author": {
+    "name": "Yuzulia",
+    "email": "yuzulia@yuzulia.work",
+    "url": "https://yuzulia.com/"
+  },
+  "contributors": [
+    {
+      "name": "YuzuRyo61",
+      "email": "yuzuryo61@yuzulia.work",
+      "url": "https://yuzuryo61.me"
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/Yuzulia/Vulpecula.git",
+    "type": "git"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^2.0.1"
+  }
+}
