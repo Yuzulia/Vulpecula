@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Host" ADD COLUMN     "discoveredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "updatedAt" TIMESTAMP(3);
+
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "updatedAt" DROP NOT NULL;

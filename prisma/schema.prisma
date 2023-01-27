@@ -11,10 +11,10 @@ datasource db {
 }
 
 model User {
-  id String @id @db.Uuid
+  id String @id @db.Char(26)
   handle String?
   host Host @relation(fields: [hostId], references: [id])
-  hostId String @db.Uuid
+  hostId String @db.Char(26)
   displayName String?
   title String?
   biography String?
@@ -23,18 +23,79 @@ model User {
   isBot Boolean @default(false)
   isManualFollow Boolean @default(false)
   isManualFollowBot Boolean @default(false)
+  isSilence Boolean @default(false)
+  isSuspend Boolean @default(false)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime? @updatedAt
   deletedAt DateTime?
+
+  key UserKey?
+  auth UserAuth?
+
+  role Role[] @relation("BelongingRoles")
+  posts Post[] @relation(name: "PostAuthor")
+  visiblePosts Post[] @relation(name: "VisiblePosts")
 
   @@unique([handle, hostId])
 }
 
 model Host {
-  id String @id @db.Uuid
+  id String @id @db.Char(26)
   fqdn String @unique @db.VarChar(256)
   name String?
   description String?
+
+  discoveredAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+
   users User[]
+}
+
+model UserKey {
+  id String @id @db.Char(26)
+  user User @relation(fields: [id], references: [id])
+  publicKey String?
+  privateKey String?
+  keyId String @unique
+}
+
+model UserAuth {
+  id String @id @db.Char(26)
+  user User @relation(fields: [id], references: [id])
+  email String @unique
+  password String
+  // TODO: 2-factor authentication implementation
+}
+
+model Role {
+  id String @id @db.Char(26)
+  name String?
+  description String?
+  color String @db.Char(6) @default("000000")
+  isPublic Boolean @default(false)
+  flag BigInt @default(0)
+  assignedTo User[] @relation("BelongingRoles")
+}
+
+model Post {
+  id String @id @db.Char(26)
+  author User @relation(name: "PostAuthor", fields: [authorId], references: [id])
+  authorId String @db.Char(26)
+  cw String?
+  body String?
+  visibility PostVisibility @default(PUBLIC)
+  visibleUsers User[] @relation(name: "VisiblePosts")
+
+  isLocalOnly Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+}
+
+enum PostVisibility {
+  PUBLIC
+  UNLISTED
+  FOLLOWER
+  DIRECT
 }
