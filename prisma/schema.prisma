@@ -9,3 +9,32 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id String @id @db.Uuid
+  handle String?
+  host Host @relation(fields: [hostId], references: [id])
+  hostId String @db.Uuid
+  displayName String?
+  title String?
+  biography String?
+  location String?
+
+  isBot Boolean @default(false)
+  isManualFollow Boolean @default(false)
+  isManualFollowBot Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@unique([handle, hostId])
+}
+
+model Host {
+  id String @id @db.Uuid
+  fqdn String @unique @db.VarChar(256)
+  name String?
+  description String?
+  users User[]
+}
