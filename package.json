@@ -21,12 +21,16 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "node dist/server/entry.mjs",
     "build": "astro build",
-    "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^2.0.1"
+    "@astrojs/node": "^5.0.1",
+    "@astrojs/preact": "^2.0.0",
+    "@astrojs/tailwind": "^3.0.0",
+    "astro": "^2.0.2",
+    "preact": "^10.11.3",
+    "tailwindcss": "^3.2.4"
   }
 }
