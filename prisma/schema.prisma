@@ -64,6 +64,7 @@ model UserAuth {
   user User @relation(fields: [id], references: [id])
   email String @unique
   password String
+  isEmailVerified Boolean @default(false)
   // TODO: 2-factor authentication implementation
 }
 
