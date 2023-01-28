@@ -23,7 +23,6 @@ model User {
   isBot Boolean @default(false)
   isManualFollow Boolean @default(false)
   isManualFollowBot Boolean @default(false)
-  isSilence Boolean @default(false)
   isSuspend Boolean @default(false)
 
   createdAt DateTime @default(now())

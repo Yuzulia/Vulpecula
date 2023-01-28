@@ -16,6 +16,8 @@ async function main(): Promise<void> {
     },
   });
 
+  // TODO: Role Template seed set (e.g. Super user, Moderator, Silence etc.)
+
   console.log({ hostLocal });
 }
 
