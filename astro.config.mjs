@@ -4,6 +4,7 @@ import tailwind from "@astrojs/tailwind";
 import preact from "@astrojs/preact";
 
 // https://astro.build/config
+// noinspection JSUnusedGlobalSymbols
 export default defineConfig({
   output: "server",
   adapter: node({

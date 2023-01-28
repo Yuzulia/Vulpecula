@@ -1,0 +1,37 @@
+---
+import { CsrfManager, DEFAULT_CSRF_TOKEN_NAME } from "../../libs/redis/csrf";
+import { csrfVerify } from "../../utils";
+
+let csrfToken: string = "";
+
+switch (Astro.request.method) {
+  case "GET": {
+    const cm = new CsrfManager();
+    csrfToken = await cm.generateToken();
+    break;
+  }
+  case "POST": {
+    const cmr = await csrfVerify(Astro.request);
+    if (cmr !== null) return cmr;
+    break;
+  }
+  default: {
+    return new Response(null, {
+      status: 405,
+      statusText: "Method Not Allowed",
+    });
+  }
+}
+---
+
+{
+  Astro.request.method === "GET" ? (
+    <form method="post">
+      <p>{csrfToken}</p>
+      <input type="hidden" name={DEFAULT_CSRF_TOKEN_NAME} value={csrfToken} />
+      <input type="submit" />
+    </form>
+  ) : (
+    <p>CSRF is OK!</p>
+  )
+}

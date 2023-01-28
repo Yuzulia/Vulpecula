@@ -2,9 +2,9 @@ import { ulid } from "ulid";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-prisma.$connect();
+await prisma.$connect();
 
-async function main() {
+async function main(): Promise<void> {
   const hostLocal = await prisma.host.upsert({
     where: {
       fqdn: ".",
