@@ -9,7 +9,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: lts/*
+          node-version: '18'
           cache: 'npm'
       - name: Install Node.js dependencies (npm ci)
         run: npm ci
