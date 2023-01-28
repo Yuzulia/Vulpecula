@@ -5,7 +5,7 @@ import { databaseClient } from "./connector";
 export class UserManager {
   private constructor(public readonly user: User) {}
 
-  static async createLocalUser(umc: UserManagerCreate) {
+  static async createLocalUser(umc: UserManagerCreate): Promise<UserManager> {
     const newId = IdGeneratorManager.generate();
     // TODO: Password hash utility
 
@@ -21,7 +21,7 @@ export class UserManager {
           create: {
             email: umc.email,
             password: umc.password,
-            isEmailVerified: umc.options?.byPassEmailAuthentication || false,
+            isEmailVerified: umc.options?.byPassEmailAuthentication ?? false,
           },
         },
         // TODO: RSA Generator utility
