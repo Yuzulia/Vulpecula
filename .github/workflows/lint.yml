@@ -1,0 +1,20 @@
+name: Lint
+on: [push]
+jobs:
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Install Node.js dependencies (npm ci)
+        run: npm ci
+      - name: Run Linters
+        uses: wearerequired/lint-action@v2
+        with:
+          eslint: true
+          prettier: true
