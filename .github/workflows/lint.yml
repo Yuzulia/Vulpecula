@@ -9,12 +9,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
       - name: Install Node.js dependencies (npm ci)
         run: npm ci
-      - name: Run Linters
-        uses: wearerequired/lint-action@v2
-        with:
-          eslint: true
-          prettier: true
+      - name: Run Eslint
+        run: npm run lint
+      - name: Run Prettier Check
+        run: npm run prettier:check

@@ -25,7 +25,8 @@
     "build": "astro build",
     "astro": "astro",
     "lint": "eslint --ext .ts,.astro src",
-    "prettier": "prettier -w ."
+    "prettier": "prettier -w .",
+    "prettier:check": "prettier -c ."
   },
   "prisma": {
     "seed": "node --loader ts-node/esm prisma/seed.ts"
