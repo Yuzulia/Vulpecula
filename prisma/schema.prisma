@@ -57,7 +57,7 @@ model UserKey {
   user User @relation(fields: [id], references: [id])
   publicKey String?
   privateKey String?
-  keyId String @unique
+  keyId String? @unique
 }
 
 model UserAuth {
