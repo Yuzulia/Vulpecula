@@ -1,11 +1,12 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const BCRYPT_SALT_ROUNDS = 10;
 
 export async function generatePasswordHash(
   rawPassword: string
 ): Promise<string> {
-  return await bcrypt.hash(rawPassword, BCRYPT_SALT_ROUNDS);
+  const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
+  return await bcrypt.hash(rawPassword, salt);
 }
 
 export async function validatePasswordHash(
