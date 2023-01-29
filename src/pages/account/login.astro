@@ -1,18 +1,55 @@
 ---
 import { CsrfManager, DEFAULT_CSRF_TOKEN_NAME } from "../../libs/redis/csrf";
 import { csrfVerify } from "../../utils";
+import { UserManager } from "../../libs/database/user";
+
+import CommonLayout from "../../layouts/CommonLayout.astro";
+import { Prisma } from "@prisma/client";
 
 let csrfToken: string = "";
+let formInvalid = false;
 
 switch (Astro.request.method) {
   case "GET": {
-    const cm = new CsrfManager();
-    csrfToken = await cm.generateToken();
     break;
   }
   case "POST": {
-    const cmr = await csrfVerify(Astro.request);
-    if (cmr !== null) return cmr;
+    const body = await Astro.request.formData();
+    const cvr = await csrfVerify(body);
+    if (cvr !== null) return cvr;
+    if (!(body.has("email") && body.has("password"))) {
+      formInvalid = true;
+      break;
+    }
+
+    try {
+      const targetUser = await UserManager.fromEmail(
+        body.get("email") as string
+      );
+
+      if (
+        !(await targetUser.validatePassword(body.get("password") as string))
+      ) {
+        formInvalid = true;
+        break;
+      }
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        switch (e.code) {
+          case "P2025": {
+            formInvalid = true;
+            break;
+          }
+          default: {
+            throw e;
+          }
+        }
+        break;
+      } else {
+        throw e;
+      }
+    }
+
     break;
   }
   default: {
@@ -22,16 +59,37 @@ switch (Astro.request.method) {
     });
   }
 }
+
+if (Astro.request.method === "GET" || formInvalid) {
+  const cm = new CsrfManager();
+  csrfToken = await cm.generateToken();
+}
 ---
 
-{
-  Astro.request.method === "GET" ? (
-    <form method="post">
-      <p>{csrfToken}</p>
-      <input type="hidden" name={DEFAULT_CSRF_TOKEN_NAME} value={csrfToken} />
-      <input type="submit" />
-    </form>
-  ) : (
-    <p>CSRF is OK!</p>
-  )
-}
+<CommonLayout title="Login">
+  {
+    Astro.request.method === "GET" || formInvalid ? (
+      <>
+        <h1>Login</h1>
+        <>{formInvalid && <p>Email or password is incorrect.</p>}</>
+        <form method="post">
+          <input
+            type="email"
+            name="email"
+            placeholder="example@example.com"
+            required
+          />
+          <input type="password" name="password" required />
+          <input
+            type="hidden"
+            name={DEFAULT_CSRF_TOKEN_NAME}
+            value={csrfToken}
+          />
+          <input type="submit" />
+        </form>
+      </>
+    ) : (
+      <p>Login OK</p>
+    )
+  }
+</CommonLayout>

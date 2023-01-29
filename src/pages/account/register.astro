@@ -4,14 +4,14 @@ import { csrfVerify } from "../../utils";
 import { UserManager, UserManagerError } from "../../libs/database/user";
 import { Prisma } from "@prisma/client";
 
+import CommonLayout from "../../layouts/CommonLayout.astro";
+
 let csrfToken: string = "";
 let formInvalid = false;
 let formErrorMessage = "";
 
 switch (Astro.request.method) {
   case "GET": {
-    const cm = new CsrfManager();
-    csrfToken = await cm.generateToken();
     break;
   }
   case "POST": {
@@ -43,6 +43,9 @@ switch (Astro.request.method) {
             throw e;
           }
         }
+        break;
+      } else {
+        throw e;
       }
     }
 
@@ -55,38 +58,37 @@ switch (Astro.request.method) {
     });
   }
 }
+
+if (Astro.request.method === "GET" || formInvalid) {
+  const cm = new CsrfManager();
+  csrfToken = await cm.generateToken();
+}
 ---
 
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Register</title>
-  </head>
-  <body>
-    {
-      Astro.request.method === "GET" || formInvalid ? (
-        <>
-          <>{formInvalid && <p>{formErrorMessage}</p>}</>
-          <form method="post">
-            <input
-              type="email"
-              name="email"
-              placeholder="example@example.com"
-              required
-            />
-            <input type="password" name="password" min="8" required />
-            <input
-              type="hidden"
-              name={DEFAULT_CSRF_TOKEN_NAME}
-              value={csrfToken}
-            />
-            <input type="submit" />
-          </form>
-        </>
-      ) : (
-        <p>Register OK</p>
-      )
-    }
-  </body>
-</html>
+<CommonLayout title="Register">
+  {
+    Astro.request.method === "GET" || formInvalid ? (
+      <>
+        <h1>Register</h1>
+        <>{formInvalid && <p>{formErrorMessage}</p>}</>
+        <form method="post">
+          <input
+            type="email"
+            name="email"
+            placeholder="example@example.com"
+            required
+          />
+          <input type="password" name="password" min="8" required />
+          <input
+            type="hidden"
+            name={DEFAULT_CSRF_TOKEN_NAME}
+            value={csrfToken}
+          />
+          <input type="submit" />
+        </form>
+      </>
+    ) : (
+      <p>Register OK</p>
+    )
+  }
+</CommonLayout>
