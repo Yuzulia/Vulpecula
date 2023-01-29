@@ -37,6 +37,7 @@
     "@astrojs/tailwind": "^3.0.0",
     "@prisma/client": "^4.9.0",
     "astro": "^2.0.2",
+    "bcrypt": "^5.1.0",
     "csrf": "^3.1.0",
     "preact": "^10.11.3",
     "prisma": "^4.9.0",
@@ -45,6 +46,7 @@
     "ulid": "^2.3.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
