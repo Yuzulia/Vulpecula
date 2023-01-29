@@ -6,7 +6,11 @@ import {
   generateKeyPairAsync,
 } from "../../utils";
 import { databaseClient } from "./connector";
-import { FULL_HANDLE_REGEX, HANDLE_REGEX } from "../../utils/handle";
+import {
+  EMAIL_REGEX,
+  FULL_HANDLE_REGEX,
+  HANDLE_REGEX,
+} from "../../utils/regex";
 
 type UserManagerType = User & { host: Host };
 
@@ -22,6 +26,9 @@ export class UserManager {
   }
 
   static async createLocalUser(umc: UserManagerCreate): Promise<UserManager> {
+    if (umc.email.match(EMAIL_REGEX) === null)
+      throw new UserManagerError("malformed email");
+
     const newId = IdGeneratorManager.generate();
     const newKeyPair = await generateKeyPairAsync();
 

@@ -40,11 +40,10 @@ export class CsrfManager {
     return instance;
   }
 
-  static async fromRequest(
-    request: Request,
+  static async fromFormData(
+    body: FormData,
     csrfTokenName: string = DEFAULT_CSRF_TOKEN_NAME
   ): Promise<CsrfManager> {
-    const body = await request.formData();
     if (!body.has(csrfTokenName))
       throw new CsrfError("csrfTokenName is invalid");
 

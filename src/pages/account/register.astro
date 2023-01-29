@@ -1,8 +1,12 @@
 ---
 import { CsrfManager, DEFAULT_CSRF_TOKEN_NAME } from "../../libs/redis/csrf";
 import { csrfVerify } from "../../utils";
+import { UserManager, UserManagerError } from "../../libs/database/user";
+import { Prisma } from "@prisma/client";
 
 let csrfToken: string = "";
+let formInvalid = false;
+let formErrorMessage = "";
 
 switch (Astro.request.method) {
   case "GET": {
@@ -11,8 +15,37 @@ switch (Astro.request.method) {
     break;
   }
   case "POST": {
-    const cvr = await csrfVerify(Astro.request);
+    const body = await Astro.request.formData();
+    const cvr = await csrfVerify(body);
     if (cvr !== null) return cvr;
+
+    if (!(body.has("email") && body.has("password"))) {
+      formInvalid = true;
+      break;
+    }
+
+    try {
+      await UserManager.createLocalUser({
+        email: body.get("email") as string,
+        password: body.get("password") as string,
+      });
+    } catch (e: any) {
+      if (e instanceof UserManagerError) {
+        formInvalid = true;
+      } else if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        switch (e.code) {
+          case "P2002": {
+            formInvalid = true;
+            formErrorMessage = "Email is already registered";
+            break;
+          }
+          default: {
+            throw e;
+          }
+        }
+      }
+    }
+
     break;
   }
   default: {
@@ -24,14 +57,36 @@ switch (Astro.request.method) {
 }
 ---
 
-{
-  Astro.request.method === "GET" ? (
-    <form method="post">
-      <p>{csrfToken}</p>
-      <input type="hidden" name={DEFAULT_CSRF_TOKEN_NAME} value={csrfToken} />
-      <input type="submit" />
-    </form>
-  ) : (
-    <p>CSRF is OK!</p>
-  )
-}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Register</title>
+  </head>
+  <body>
+    {
+      Astro.request.method === "GET" || formInvalid ? (
+        <>
+          <>{formInvalid && <p>{formErrorMessage}</p>}</>
+          <form method="post">
+            <input
+              type="email"
+              name="email"
+              placeholder="example@example.com"
+              required
+            />
+            <input type="password" name="password" min="8" required />
+            <input
+              type="hidden"
+              name={DEFAULT_CSRF_TOKEN_NAME}
+              value={csrfToken}
+            />
+            <input type="submit" />
+          </form>
+        </>
+      ) : (
+        <p>Register OK</p>
+      )
+    }
+  </body>
+</html>
