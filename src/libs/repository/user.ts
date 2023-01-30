@@ -4,13 +4,10 @@ import {
   IdGeneratorManager,
   validatePasswordHash,
   generateKeyPairAsync,
-} from "../../utils";
-import { databaseClient } from "./connector";
-import {
-  EMAIL_REGEX,
-  FULL_HANDLE_REGEX,
-  HANDLE_REGEX,
-} from "../../utils/regex";
+  createSessionToken,
+} from "../utils";
+import { databaseClient } from "../database";
+import { EMAIL_REGEX, FULL_HANDLE_REGEX, HANDLE_REGEX } from "../utils/regex";
 
 type UserManagerType = User & { host: Host };
 
@@ -171,6 +168,25 @@ export class UserManager {
     this._user = targetUserUpsert;
     return true;
   }
+
+  async login(umsc: UserManagerSessionCreate): Promise<string> {
+    if (!this.isLocalUser)
+      throw new UserManagerError("Remote user login is not supported");
+    const token = await createSessionToken();
+
+    await databaseClient.userSession.create({
+      data: {
+        token,
+        user: {
+          connect: this.user,
+        },
+        ip: umsc.ip,
+        userAgent: umsc.userAgent,
+      },
+    });
+
+    return token;
+  }
 }
 
 export interface UserManagerCreate {
@@ -179,6 +195,11 @@ export interface UserManagerCreate {
   options?: {
     bypassEmailAuthentication?: boolean;
   };
+}
+
+export interface UserManagerSessionCreate {
+  ip?: string;
+  userAgent: string;
 }
 
 export class UserManagerError extends Error {}

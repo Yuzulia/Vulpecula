@@ -1,5 +1,5 @@
 import Tokens from "csrf";
-import { redisClient } from "./connector";
+import { redisClient } from "../redis";
 
 const CSRF_EXPIRY_SECONDS = 3600;
 const CSRF_TOKEN_OPTIONS: Tokens.Options = {

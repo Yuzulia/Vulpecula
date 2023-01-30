@@ -1,4 +1,4 @@
-import { CsrfManager, CsrfError } from "../libs/redis/csrf";
+import { CsrfManager, CsrfError } from "../repository/csrf";
 
 export async function csrfVerify(formData: FormData): Promise<Response | null> {
   let cmPost: CsrfManager;
