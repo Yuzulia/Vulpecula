@@ -7,6 +7,7 @@ import {
   createSessionToken,
 } from "../utils";
 import { databaseClient } from "../database";
+import { redisClient } from "../redis";
 import { EMAIL_REGEX, FULL_HANDLE_REGEX, HANDLE_REGEX } from "../utils/regex";
 
 type UserManagerType = User & { host: Host };
@@ -121,6 +122,76 @@ export class UserManager {
     return new UserManager(targetUserAuth.user);
   }
 
+  static async fromSessionToken(token: string): Promise<UserManager> {
+    const userSessionData = await databaseClient.userSession.findUniqueOrThrow({
+      where: {
+        token,
+      },
+      include: {
+        user: {
+          include: {
+            host: true,
+          },
+        },
+      },
+    });
+    if (
+      userSessionData.revokedAt !== null &&
+      userSessionData.revokedAt < new Date(Date.now())
+    )
+      throw new UserManagerError("Session token is revoked");
+    return new UserManager(userSessionData.user);
+  }
+
+  static async validateSessionToken(token: string): Promise<boolean> {
+    const key = `sessionToken:${token}`;
+
+    let ex = 3600;
+    let userId = await redisClient.get(key);
+    if (userId === null) {
+      const userSessionData = await databaseClient.userSession.findUnique({
+        where: {
+          token,
+        },
+        select: {
+          userId: true,
+          revokedAt: true,
+        },
+      });
+      if (userSessionData === null) return false;
+      if (
+        userSessionData.revokedAt !== null &&
+        userSessionData.revokedAt < new Date(Date.now())
+      )
+        return false;
+      if (userSessionData.revokedAt !== null) {
+        ex = Math.min(
+          3600,
+          Math.floor((Date.now() - userSessionData.revokedAt.getTime()) / 1000)
+        );
+      }
+      userId = userSessionData.userId;
+    }
+    await redisClient.set(key, userId, {
+      EX: ex,
+      XX: true,
+    });
+    return true;
+  }
+
+  static async revokeToken(token: string): Promise<void> {
+    const key = `sessionToken:${token}`;
+    await redisClient.del(key);
+    await databaseClient.userSession.update({
+      where: {
+        token,
+      },
+      data: {
+        revokedAt: new Date(Date.now()),
+      },
+    });
+  }
+
   async getEmail(): Promise<string | null> {
     const email = await databaseClient.userAuth.findUnique({
       where: {
@@ -172,17 +243,29 @@ export class UserManager {
   async login(umsc: UserManagerSessionCreate): Promise<string> {
     if (!this.isLocalUser)
       throw new UserManagerError("Remote user login is not supported");
+    if (umsc.expiresAt !== undefined && umsc.expiresAt <= new Date(Date.now()))
+      throw new UserManagerError("expiresAt must not past time");
     const token = await createSessionToken();
 
     await databaseClient.userSession.create({
       data: {
         token,
-        user: {
-          connect: this.user,
-        },
+        userId: this.user.id,
         ip: umsc.ip,
         userAgent: umsc.userAgent,
+        revokedAt: umsc.expiresAt,
       },
+    });
+
+    let ex = 3600;
+    if (umsc.expiresAt !== undefined) {
+      ex = Math.min(
+        3600,
+        Math.floor((Date.now() - umsc.expiresAt.getTime()) / 1000)
+      );
+    }
+    await redisClient.set(`sessionToken:${token}`, this.user.id, {
+      EX: ex,
     });
 
     return token;
@@ -199,7 +282,8 @@ export interface UserManagerCreate {
 
 export interface UserManagerSessionCreate {
   ip?: string;
-  userAgent: string;
+  userAgent?: string;
+  expiresAt?: Date;
 }
 
 export class UserManagerError extends Error {}

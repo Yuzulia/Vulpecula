@@ -1,2 +1,25 @@
 ---
+import CommonLayout from "../layouts/CommonLayout.astro";
+import { TOKEN_COOKIE_NAME } from "../libs/const";
+import { UserManager } from "../libs/repository/user";
+
+let userAuthenticated = false;
+if (
+  Astro.cookies.has(TOKEN_COOKIE_NAME) &&
+  (await UserManager.validateSessionToken(
+    Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
+  ))
+) {
+  userAuthenticated = true;
+}
 ---
+
+<CommonLayout>
+  {
+    userAuthenticated ? (
+      <p>Howdy, Vulpecula User!</p>
+    ) : (
+      <p>Welcome to Vulpecula!</p>
+    )
+  }
+</CommonLayout>

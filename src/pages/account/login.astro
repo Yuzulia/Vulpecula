@@ -8,6 +8,16 @@ import { UserManager } from "../../libs/repository/user";
 
 import CommonLayout from "../../layouts/CommonLayout.astro";
 import { Prisma } from "@prisma/client";
+import { TOKEN_COOKIE_NAME } from "../../libs/const";
+
+if (
+  Astro.cookies.has(TOKEN_COOKIE_NAME) &&
+  (await UserManager.validateSessionToken(
+    Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
+  ))
+) {
+  return Astro.redirect("/");
+}
 
 let csrfToken: string = "";
 let formInvalid = false;
@@ -36,6 +46,14 @@ switch (Astro.request.method) {
         formInvalid = true;
         break;
       }
+      const token = await targetUser.login({
+        ip: Astro.clientAddress,
+        userAgent: Astro.request.headers.get("User-Agent") ?? undefined,
+      });
+      Astro.cookies.set(TOKEN_COOKIE_NAME, token, {
+        path: "/",
+        sameSite: "strict",
+      });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         switch (e.code) {

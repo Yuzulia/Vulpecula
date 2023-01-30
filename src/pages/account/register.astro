@@ -8,6 +8,16 @@ import { UserManager, UserManagerError } from "../../libs/repository/user";
 import { Prisma } from "@prisma/client";
 
 import CommonLayout from "../../layouts/CommonLayout.astro";
+import { TOKEN_COOKIE_NAME } from "../../libs/const";
+
+if (
+  Astro.cookies.has(TOKEN_COOKIE_NAME) &&
+  (await UserManager.validateSessionToken(
+    Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
+  ))
+) {
+  return Astro.redirect("/");
+}
 
 let csrfToken: string = "";
 let formInvalid = false;
