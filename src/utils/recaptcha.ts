@@ -45,8 +45,12 @@ export async function recaptchaVerify(
       if (!fetchJson.success) return false;
       return true;
     }
-    default:
+    case undefined: {
       return true;
+    }
+    default: {
+      return false;
+    }
   }
 }
 
