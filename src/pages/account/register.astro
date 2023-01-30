@@ -2,6 +2,7 @@
 import { CsrfManager, DEFAULT_CSRF_TOKEN_NAME } from "../../libs/redis/csrf";
 import { csrfVerify } from "../../utils";
 import { UserManager, UserManagerError } from "../../libs/database/user";
+import { recaptchaVerify } from "../../utils/recaptcha";
 import { Prisma } from "@prisma/client";
 
 import CommonLayout from "../../layouts/CommonLayout.astro";
@@ -9,6 +10,8 @@ import CommonLayout from "../../layouts/CommonLayout.astro";
 let csrfToken: string = "";
 let formInvalid = false;
 let formErrorMessage = "";
+const recaptchaMode = import.meta.env.VULPECULA_RECAPTCHA;
+const recaptchaSiteKey = import.meta.env.VULPECULA_RECAPTCHA_SITE_KEY;
 
 switch (Astro.request.method) {
   case "GET": {
@@ -21,6 +24,14 @@ switch (Astro.request.method) {
 
     if (!(body.has("email") && body.has("password"))) {
       formInvalid = true;
+      formErrorMessage = "Malformed form";
+      break;
+    }
+
+    const recaptchaReponse = await recaptchaVerify(body, Astro.clientAddress);
+    if (!recaptchaReponse) {
+      formInvalid = true;
+      formErrorMessage = "Recaptcha challenge failed.";
       break;
     }
 
@@ -79,12 +90,28 @@ if (Astro.request.method === "GET" || formInvalid) {
             required
           />
           <input type="password" name="password" min="8" required />
+          {recaptchaMode === "recaptcha" && (
+            <div class="g-recaptcha" data-sitekey={recaptchaSiteKey} />
+          )}
+          {recaptchaMode === "turnstile" && (
+            <div class="cf-turnstile" data-sitekey={recaptchaSiteKey} />
+          )}
           <input
             type="hidden"
             name={DEFAULT_CSRF_TOKEN_NAME}
             value={csrfToken}
           />
           <input type="submit" />
+          {recaptchaMode === "recaptcha" && (
+            <script src="https://www.google.com/recaptcha/api.js" async defer />
+          )}
+          {recaptchaMode === "turnstile" && (
+            <script
+              src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+              async
+              defer
+            />
+          )}
         </form>
       </>
     ) : (
