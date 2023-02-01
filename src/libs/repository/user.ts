@@ -1,4 +1,4 @@
-import type { Host, User } from "@prisma/client";
+import type { Host, User, UserAuth } from "@prisma/client";
 import {
   generatePasswordHash,
   IdGeneratorManager,
@@ -269,6 +269,14 @@ export class UserManager {
     });
 
     return token;
+  }
+
+  async getAuth(): Promise<UserAuth | null> {
+    return databaseClient.userAuth.findUnique({
+      where: {
+        id: this.user.id,
+      }
+    });
   }
 }
 
