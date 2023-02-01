@@ -1,0 +1,96 @@
+---
+import { Prisma } from "@prisma/client";
+import CommonLayout from "../../../layouts/CommonLayout.astro";
+import { TOKEN_COOKIE_NAME } from "../../../libs/const";
+import { 
+    CsrfManager,
+    DEFAULT_CSRF_TOKEN_NAME,
+} from "../../../libs/repository/csrf";
+import { UserManager } from "../../../libs/repository/user";
+import { csrfVerify } from "../../../libs/utils";
+import { isCookieLogin } from "../../../libs/utils/is-login";
+
+if (!(await isCookieLogin(Astro.cookies)))
+  return Astro.redirect("/account/login");
+
+const currentUser = await UserManager.fromSessionToken(
+  Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
+);
+const currentUserAuth = await currentUser.getAuth();
+if (currentUserAuth === null || (currentUserAuth && !currentUserAuth.isEmailVerified)) {
+    return Astro.redirect("/account/settings");
+}
+
+let formInvalid = false;
+let csrfToken = "";
+switch (Astro.request.method) {
+    case "GET": {
+        break;
+    }
+    case "POST": {
+        const body = await Astro.request.formData();
+        const cvr = await csrfVerify(body);
+        if (cvr !== null) return cvr;
+        if (!body.has("handle")) {
+            break;
+        }
+        try {
+            const configured = await currentUser.setHandle(body.get("handle") as string);
+            if (!configured) {
+                formInvalid = true;
+                break;
+            }
+            return Astro.redirect("/account/settings");
+        } catch(e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError) {
+                switch(e.code) {
+                    case "P2002": {
+                        formInvalid = true;
+                        break;
+                    }
+                    default: {
+                        throw e;
+                    }
+                }
+            }
+        }
+    }
+    default: {
+        return new Response(null, {
+            status: 405,
+            statusText: "Method not allowed",
+        });
+    }
+}
+
+if (Astro.request.method === "GET" || formInvalid) {
+    const cm = new CsrfManager();
+    csrfToken = await cm.generateToken();
+}
+---
+<CommonLayout>
+    {
+        currentUser.user.handle === null ? (
+            <>
+                <p>Set your handle</p>
+                {formInvalid && (
+                    <div>
+                        <p>Handle is invalid or already taken.</p>
+                    </div>
+                )}
+                <p><b>Once chosen handle, You cannot change handle. Please decide carefully.</b></p>
+                <form method="post">
+                    <input type="text" name="handle" pattern="^[a-zA-Z0-9_]+$" required>
+                    <input
+                        type="hidden"
+                        name={DEFAULT_CSRF_TOKEN_NAME}
+                        value={csrfToken}
+                      />
+                    <input type="submit">
+                </form>
+            </>
+        ) : (
+            <p>Your Handle: {currentUser.user.handle}</p>
+        )
+    }
+</CommonLayout>

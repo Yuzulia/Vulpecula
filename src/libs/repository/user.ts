@@ -8,7 +8,7 @@ import {
 } from "../utils";
 import { databaseClient } from "../database";
 import { redisClient } from "../redis";
-import { EMAIL_REGEX, FULL_HANDLE_REGEX, HANDLE_REGEX } from "../utils/regex";
+import { EMAIL_REGEX, FULL_HANDLE_REGEX, HANDLE_LOCAL_REGEX, HANDLE_REGEX } from "../utils/regex";
 
 type UserManagerType = User & { host: Host };
 
@@ -222,7 +222,22 @@ export class UserManager {
 
   async setHandle(handle: string): Promise<boolean> {
     if (this.user.handle !== null) return false;
-    if (handle.match(HANDLE_REGEX) === null) return false;
+    if (handle.match(HANDLE_LOCAL_REGEX) === null) return false;
+
+    const handleCount = await databaseClient.user.count({
+      where: {
+        handle: {
+          equals: handle,
+          mode: "insensitive",
+        },
+        host: {
+          fqdn: {
+            equals: "."
+          }
+        }
+      }
+    });
+    if (handleCount > 0) return false;
 
     const targetUserUpsert = await databaseClient.user.update({
       where: {
