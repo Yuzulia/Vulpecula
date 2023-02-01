@@ -1,17 +1,8 @@
 ---
 import CommonLayout from "../layouts/CommonLayout.astro";
-import { TOKEN_COOKIE_NAME } from "../libs/const";
-import { UserManager } from "../libs/repository/user";
+import { isCookieLogin } from "../libs/utils/is-login";
 
-let userAuthenticated = false;
-if (
-  Astro.cookies.has(TOKEN_COOKIE_NAME) &&
-  (await UserManager.validateSessionToken(
-    Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
-  ))
-) {
-  userAuthenticated = true;
-}
+let userAuthenticated = await isCookieLogin(Astro.cookies);
 ---
 
 <CommonLayout>

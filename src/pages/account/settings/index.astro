@@ -1,0 +1,25 @@
+---
+import CommonLayout from "../../../layouts/CommonLayout.astro";
+import { TOKEN_COOKIE_NAME } from "../../../libs/const";
+import { UserManager } from "../../../libs/repository/user";
+import { isCookieLogin } from "../../../libs/utils/is-login";
+
+if (!await isCookieLogin(Astro.cookies)) return Astro.redirect("/account/login");
+
+const currentUser = await UserManager.fromSessionToken(Astro.cookies.get(TOKEN_COOKIE_NAME).value as string);
+const currentUserAuth = await currentUser.getAuth();
+---
+<CommonLayout>
+    <h1>Account Settings</h1>
+    {(currentUserAuth && !currentUserAuth.isEmailVerified) &&
+        <div>
+            <p>Email is not verified yet.</p>
+        </div>
+    }
+    {((currentUserAuth && currentUserAuth.isEmailVerified) && currentUser.user.handle === null) &&
+        <div>
+            <p>Handle is not configured</p>
+            <a href="/account/settings/configure">Configure</a>
+        </div>
+    }
+</CommonLayout>
