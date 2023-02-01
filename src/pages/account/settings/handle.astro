@@ -17,6 +17,11 @@ const currentUser = await UserManager.fromSessionToken(
   Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
 );
 const currentUserAuth = await currentUser.getAuth();
+if (currentUser.user.isSuspend)
+  return new Response(null, {
+    status: 403,
+    statusText: "Forbidden",
+  });
 if (
   currentUserAuth === null ||
   (currentUserAuth && !currentUserAuth.isEmailVerified)
