@@ -272,10 +272,10 @@ export class UserManager {
   }
 
   async getAuth(): Promise<UserAuth | null> {
-    return databaseClient.userAuth.findUnique({
+    return await databaseClient.userAuth.findUnique({
       where: {
         id: this.user.id,
-      }
+      },
     });
   }
 }

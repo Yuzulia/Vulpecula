@@ -56,11 +56,14 @@ switch (Astro.request.method) {
         secure: true,
       });
       const targetAuth = await targetUser.getAuth();
-      if ((targetAuth && !targetAuth.isEmailVerified) || targetUser.user.handle === null) {
+      if (
+        (targetAuth && !targetAuth.isEmailVerified) ||
+        targetUser.user.handle === null
+      ) {
         return Astro.redirect("/account/settings");
-      } else {
-        return Astro.redirect("/");
       }
+
+      return Astro.redirect("/");
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         switch (e.code) {
@@ -77,8 +80,6 @@ switch (Astro.request.method) {
         throw e;
       }
     }
-
-    break;
   }
   default: {
     return new Response(null, {

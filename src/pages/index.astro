@@ -2,7 +2,7 @@
 import CommonLayout from "../layouts/CommonLayout.astro";
 import { isCookieLogin } from "../libs/utils/is-login";
 
-let userAuthenticated = await isCookieLogin(Astro.cookies);
+const userAuthenticated = await isCookieLogin(Astro.cookies);
 ---
 
 <CommonLayout>
