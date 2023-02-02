@@ -53,8 +53,7 @@ switch (Astro.request.method) {
         email,
         password: body.get("password") as string,
       });
-      const emailVerifyToken = await newUser.issueEmailVerificationCode(email);
-      console.log(emailVerifyToken);
+      await newUser.issueEmailVerificationCode(email);
     } catch (e: any) {
       if (e instanceof UserManagerError) {
         formInvalid = true;
