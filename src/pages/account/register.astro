@@ -48,10 +48,13 @@ switch (Astro.request.method) {
     }
 
     try {
-      await UserManager.createLocalUser({
-        email: body.get("email") as string,
+      const email = body.get("email") as string;
+      const newUser = await UserManager.createLocalUser({
+        email,
         password: body.get("password") as string,
       });
+      const emailVerifyToken = await newUser.issueEmailVerificationCode(email);
+      console.log(emailVerifyToken);
     } catch (e: any) {
       if (e instanceof UserManagerError) {
         formInvalid = true;

@@ -4,4 +4,4 @@ export { generatePasswordHash, validatePasswordHash } from "./password";
 export { generateKeyPairAsync } from "./key-pair";
 export { FULL_HANDLE_REGEX, HANDLE_REGEX } from "./regex";
 export { recaptchaVerify } from "./recaptcha";
-export { createSessionToken, createVerifyToken } from "./token";
+export { createSessionToken, createEmailVerifyToken } from "./token";

@@ -5,6 +5,7 @@ import {
   validatePasswordHash,
   generateKeyPairAsync,
   createSessionToken,
+  createEmailVerifyToken,
 } from "../utils";
 import { databaseClient } from "../database";
 import { redisClient } from "../redis";
@@ -261,7 +262,7 @@ export class UserManager {
 
   async login(umsc: UserManagerSessionCreate): Promise<string> {
     if (!this.isLocalUser)
-      throw new UserManagerError("Remote user login is not supported");
+      throw new UserManagerError("Remote user is not supported");
     if (umsc.expiresAt !== undefined && umsc.expiresAt <= new Date(Date.now()))
       throw new UserManagerError("expiresAt must not past time");
     const token = await createSessionToken();
@@ -296,6 +297,47 @@ export class UserManager {
         id: this.user.id,
       },
     });
+  }
+
+  async setEmail(
+    email: string,
+    isEmailVerified: boolean = true
+  ): Promise<void> {
+    if (!this.isLocalUser)
+      throw new UserManagerError("Remote user is not supported");
+
+    await databaseClient.userAuth.update({
+      where: {
+        id: this.user.id,
+      },
+      data: {
+        email,
+        isEmailVerified,
+      },
+    });
+  }
+
+  async issueEmailVerificationCode(newEmail: string): Promise<string> {
+    const token = await createEmailVerifyToken();
+    const key = `emailToken:${token}`;
+    await redisClient.hSet(key, "email", newEmail);
+    await redisClient.hSet(key, "userId", this.user.id);
+    await redisClient.expire(key, 1800);
+    return token;
+  }
+
+  static async verifyEmailVerification(token: string): Promise<boolean> {
+    const key = `emailToken:${token}`;
+    const email = await redisClient.hGet(key, "email");
+    if (email === undefined || email === null) return false;
+    const targetUserId = await redisClient.hGet(key, "userId");
+    if (targetUserId === undefined || targetUserId === null)
+      throw new UserManagerError("Email verification key error.");
+    const targetUser = await UserManager.fromId(targetUserId);
+    if (!targetUser.isLocalUser) return false;
+    await targetUser.setEmail(email);
+    await redisClient.del(key);
+    return true;
   }
 }
 
