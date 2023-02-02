@@ -40,6 +40,7 @@ switch (Astro.request.method) {
     const cvr = await csrfVerify(body);
     if (cvr !== null) return cvr;
     if (!body.has("handle")) {
+      formInvalid = true;
       break;
     }
     try {
