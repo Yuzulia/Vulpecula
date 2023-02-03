@@ -11,25 +11,41 @@ const currentUser = await UserManager.fromSessionToken(
   Astro.cookies.get(TOKEN_COOKIE_NAME).value as string
 );
 const currentUserAuth = await currentUser.getAuth();
+if (currentUserAuth === null)
+  return new Response(null, {
+    status: 500,
+    statusText: "Internal Server Error",
+  });
 ---
 
 <CommonLayout>
   <h1>Account Settings</h1>
   {
-    currentUserAuth && !currentUserAuth.isEmailVerified && (
+    currentUser.user.isSuspend && (
+      <div>
+        <p>Your account is suspended.</p>
+      </div>
+    )
+  }
+  {
+    !currentUserAuth.isEmailVerified && (
       <div>
         <p>Email is not verified yet.</p>
       </div>
     )
   }
   {
-    currentUserAuth &&
-      currentUserAuth.isEmailVerified &&
-      currentUser.user.handle === null && (
-        <div>
-          <p>Handle is not configured</p>
-          <a href="/account/settings/handle">Configure</a>
-        </div>
-      )
+    currentUserAuth.isEmailVerified && currentUser.user.handle === null && (
+      <div>
+        <p>Handle is not configured</p>
+        <a href="/account/settings/handle">Configure</a>
+      </div>
+    )
   }
+  {
+    !currentUser.user.isSuspend && (
+      <a href="/account/settings/email">Change email</a>
+    )
+  }
+  <a href="/account/settings/password">Change password</a>
 </CommonLayout>

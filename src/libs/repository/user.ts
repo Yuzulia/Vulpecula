@@ -28,6 +28,13 @@ export class UserManager {
     return this.user.host.fqdn === ".";
   }
 
+  async isActive(): Promise<boolean> {
+    if (!this.user.isSuspend) return false;
+    if (this.user.deletedAt !== null) return false;
+    if (this.user.handle === null) return false;
+    return true;
+  }
+
   static async createLocalUser(umc: UserManagerCreate): Promise<UserManager> {
     if (umc.email.match(EMAIL_REGEX) === null)
       throw new UserManagerError("malformed email");
