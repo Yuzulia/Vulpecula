@@ -1,0 +1,49 @@
+---
+import { Prisma } from "@prisma/client";
+import CommonLayout from "../layouts/CommonLayout.astro";
+import NotFound from "../layouts/NotFound.astro";
+import { UserManager, UserManagerError } from "../libs/repository/user";
+
+const { handle } = Astro.params;
+
+let targetUser: UserManager | undefined;
+if (handle === undefined) {
+  Astro.response.status = 404;
+} else {
+  try {
+    targetUser = await UserManager.fromHandle(handle);
+    if (targetUser.user.isSuspend) {
+      targetUser = undefined;
+      Astro.response.status = 404;
+    }
+  } catch (e) {
+    if (e instanceof UserManagerError) {
+      Astro.response.status = 404;
+    } else if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      switch (e.code) {
+        case "P2025": {
+          Astro.response.status = 404;
+          break;
+        }
+        default: {
+          throw e;
+        }
+      }
+    } else {
+      throw e;
+    }
+  }
+}
+---
+
+<CommonLayout>
+  {
+    Astro.response.status === 404 ? (
+      <NotFound />
+    ) : (
+      <>
+        <p>Handle: @{handle}</p>
+      </>
+    )
+  }
+</CommonLayout>

@@ -92,14 +92,14 @@ export class UserManager {
     const targetUser = await databaseClient.user.findFirstOrThrow({
       where: {
         handle: {
-          equals: handle[1],
+          equals: handleMatch[1],
           mode: "insensitive",
         },
         host:
           handle[4] !== undefined
             ? {
                 fqdn: {
-                  equals: handle[4],
+                  equals: handleMatch[4],
                   mode: "insensitive",
                 },
               }
