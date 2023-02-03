@@ -41,7 +41,9 @@
     "astro": "^2.0.2",
     "bcryptjs": "^2.4.3",
     "csrf": "^3.1.0",
+    "handlebars": "^4.7.7",
     "nanoid": "^4.0.0",
+    "nodemailer": "^6.9.1",
     "preact": "^10.11.3",
     "prisma": "^4.9.0",
     "redis": "^4.6.2",
@@ -51,6 +53,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/node": "^18.11.18",
+    "@types/nodemailer": "^6.4.7",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
     "eslint": "^8.32.0",
