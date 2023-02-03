@@ -339,6 +339,20 @@ export class UserManager {
     await redisClient.del(key);
     return true;
   }
+
+  async changePassword(newPassword: string): Promise<void> {
+    if (!this.isLocalUser)
+      throw new UserManagerError("Remote user is not supported");
+    const hashedNewPassword = await generatePasswordHash(newPassword);
+    await databaseClient.userAuth.update({
+      where: {
+        id: this.user.id,
+      },
+      data: {
+        password: hashedNewPassword,
+      },
+    });
+  }
 }
 
 export interface UserManagerCreate {
