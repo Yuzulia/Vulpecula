@@ -14,6 +14,9 @@ import {
   FULL_HANDLE_REGEX,
   HANDLE_LOCAL_REGEX,
 } from "../utils/regex";
+import { EmailSender } from "../email";
+import type SMTPPool from "nodemailer/lib/smtp-pool";
+import { TemplateEngine } from "../template";
 
 type UserManagerType = User & { host: Host };
 
@@ -324,13 +327,30 @@ export class UserManager {
     });
   }
 
-  async issueEmailVerificationCode(newEmail: string): Promise<string> {
+  async issueEmailVerificationCode(
+    newEmail: string
+  ): Promise<SMTPPool.SentMessageInfo> {
     const token = await createEmailVerifyToken();
     const key = `emailToken:${token}`;
     await redisClient.hSet(key, "email", newEmail);
     await redisClient.hSet(key, "userId", this.user.id);
     await redisClient.expire(key, 1800);
-    return token;
+
+    const em = new EmailSender(newEmail);
+    const template = await TemplateEngine.load("confirm-email.handlebars");
+    const verifyUrl = new URL(
+      `/account/verify/${token}`,
+      import.meta.env.VULPECULA_BASE_URL
+    );
+    const templateText = template.render({
+      email: newEmail,
+      verifyUrl,
+      url: import.meta.env.VULPECULA_BASE_URL,
+    });
+
+    return await em.send("Vulpecula: Email verification", {
+      text: templateText,
+    });
   }
 
   static async verifyEmailVerification(token: string): Promise<boolean> {
