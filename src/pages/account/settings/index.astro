@@ -2,7 +2,7 @@
 import CommonLayout from "../../../layouts/CommonLayout.astro";
 import { TOKEN_COOKIE_NAME } from "../../../libs/const";
 import { UserManager } from "../../../libs/repository/user";
-import { isCookieLogin } from "../../../libs/utils/is-login";
+import { isCookieLogin } from "../../../libs/utils";
 
 if (!(await isCookieLogin(Astro.cookies)))
   return Astro.redirect("/account/login");
