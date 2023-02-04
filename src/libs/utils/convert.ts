@@ -1,3 +1,3 @@
 export function toBoolean(value: string): boolean {
-    return value.toLowerCase() === "true";
+  return value.toLowerCase() === "true";
 }

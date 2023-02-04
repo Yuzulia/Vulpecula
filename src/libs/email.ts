@@ -1,11 +1,12 @@
 import nodemailer from "nodemailer";
 import type SMTPPool from "nodemailer/lib/smtp-pool";
+import { toBoolean } from "./utils";
 
 const mailTransport = nodemailer.createTransport({
   pool: true,
   host: import.meta.env.MAIL_HOST,
-  port: import.meta.env.MAIL_PORT,
-  secure: import.meta.env.MAIL_SECURE,
+  port: parseInt(import.meta.env.MAIL_PORT, 10),
+  secure: toBoolean(import.meta.env.MAIL_SECURE),
   auth: {
     user: import.meta.env.MAIL_AUTH_USER,
     pass: import.meta.env.MAIL_AUTH_PASS,
