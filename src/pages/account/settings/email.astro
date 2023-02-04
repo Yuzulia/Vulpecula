@@ -7,6 +7,8 @@ import {
   CsrfManager,
   DEFAULT_CSRF_TOKEN_NAME,
 } from "../../../libs/repository/csrf";
+import { EmailSender } from "../../../libs/email";
+import { TemplateEngine } from "../../../libs/template";
 
 if (!(await isCookieLogin(Astro.cookies)))
   return Astro.redirect("/account/login");
@@ -42,16 +44,29 @@ switch (Astro.request.method) {
       formInvalidMessage = "Malformed form.";
       break;
     }
-    if ((body.get("email") as string) === currentUserAuth.email) {
-      formInvalid = true;
-      formInvalidMessage = "Same email address.";
-    }
+    const email = body.get("email") as string;
     if (!(await currentUser.validatePassword(body.get("password") as string))) {
       formInvalid = true;
       formInvalidMessage = "Invalid password.";
       break;
     }
-    await currentUser.issueEmailVerificationCode(body.get("email") as string);
+    const verifyCode = await currentUser.issueEmailVerificationCode(
+      email
+    );
+    const em = new EmailSender(email);
+    const template = await TemplateEngine.load("confirm-email.handlebars");
+    const verifyUrl = new URL(
+      `/account/verify/${verifyCode}`,
+      import.meta.env.VULPECULA_BASE_URL
+    );
+    const templateText = template.render({
+      email,
+      verifyUrl: verifyUrl.toString(),
+      url: import.meta.env.VULPECULA_BASE_URL,
+    });
+    await em.send("Vulpecula: Confirm email", {
+      text: templateText,
+    });
     break;
   }
 }

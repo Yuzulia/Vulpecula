@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly MAIL_AUTH_USER: string;
   readonly MAIL_AUTH_PASS: string;
   readonly MAIL_FROM: string;
+  readonly VULPECULA_BASE_URL: string;
 }
 
 interface ImportMeta {
