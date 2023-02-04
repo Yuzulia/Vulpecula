@@ -1,4 +1,4 @@
-import type { Host, User, UserAuth } from "@prisma/client";
+import { type Host, Prisma, type User, type UserAuth } from "@prisma/client";
 import {
   generatePasswordHash,
   IdGeneratorManager,
@@ -360,6 +360,25 @@ export class UserManager {
     const targetUserId = await redisClient.hGet(key, "userId");
     if (targetUserId === undefined || targetUserId === null)
       throw new UserManagerError("Email verification key error.");
+
+    try {
+      await UserManager.fromEmail(email);
+      return false;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        switch (e.code) {
+          case "P2025": {
+            break;
+          }
+          default: {
+            throw e;
+          }
+        }
+      } else {
+        throw e;
+      }
+    }
+
     const targetUser = await UserManager.fromId(targetUserId);
     if (!targetUser.isLocalUser) return false;
     await targetUser.setEmail(email);

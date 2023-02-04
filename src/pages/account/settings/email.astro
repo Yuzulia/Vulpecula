@@ -7,6 +7,7 @@ import {
   CsrfManager,
   DEFAULT_CSRF_TOKEN_NAME,
 } from "../../../libs/repository/csrf";
+import { Prisma } from "@prisma/client";
 
 if (!(await isCookieLogin(Astro.cookies)))
   return Astro.redirect("/account/login");
@@ -48,7 +49,27 @@ switch (Astro.request.method) {
       formInvalidMessage = "Invalid password.";
       break;
     }
-    await currentUser.issueEmailVerificationCode(email);
+    try {
+      await UserManager.fromEmail(email);
+      formInvalid = true;
+      formInvalidMessage =
+        "The specified e-mail address has already been registered.";
+      break;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        switch (e.code) {
+          case "P2025": {
+            await currentUser.issueEmailVerificationCode(email);
+            break;
+          }
+          default: {
+            throw e;
+          }
+        }
+      } else {
+        throw e;
+      }
+    }
     break;
   }
 }
