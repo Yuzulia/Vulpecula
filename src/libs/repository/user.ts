@@ -341,7 +341,7 @@ export class UserManager {
     await redisClient.expire(key, 1800);
 
     const em = new EmailSender(newEmail);
-    const template = await TemplateEngine.load("confirm-email.handlebars");
+    const template = await TemplateEngine.load("confirm-email");
     const verifyUrl = new URL(
       `/account/verify/${token}`,
       import.meta.env.VULPECULA_BASE_URL
@@ -403,7 +403,7 @@ export class UserManager {
     await redisClient.expire(key, 900);
 
     const em = new EmailSender(userAuth.email);
-    const template = await TemplateEngine.load("reset-password.handlebars");
+    const template = await TemplateEngine.load("reset-password");
     const verifyUrl = new URL(
       `/account/reset/${token}`,
       import.meta.env.VULPECULA_BASE_URL
@@ -450,7 +450,7 @@ export class UserManager {
     });
 
     if (sendMessage && userAuth.isEmailVerified) {
-      const template = await TemplateEngine.load("password-changed.handlebars");
+      const template = await TemplateEngine.load("password-changed");
       const templateText = template.render({
         email: userAuth.email,
         url: import.meta.env.VULPECULA_BASE_URL,

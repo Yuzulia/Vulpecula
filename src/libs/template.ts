@@ -1,7 +1,5 @@
 import Handlebars from "handlebars";
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+// import fs from "fs/promises";
 
 export class TemplateEngine {
   private readonly template: HandlebarsTemplateDelegate<any>;
@@ -11,14 +9,8 @@ export class TemplateEngine {
   }
 
   static async load(templatePath: string): Promise<TemplateEngine> {
-    const dirName = path.dirname(fileURLToPath(import.meta.url));
-    const templateFile = await fs.readFile(
-      path.join(dirName, "../templates", templatePath),
-      {
-        encoding: "utf-8",
-      }
-    );
-    return new TemplateEngine(templateFile);
+    const templateFile = await import(`../templates/${templatePath}.handlebars?raw`);
+    return new TemplateEngine(templateFile.default);
   }
 
   render(context: any, options?: Handlebars.RuntimeOptions): string {
