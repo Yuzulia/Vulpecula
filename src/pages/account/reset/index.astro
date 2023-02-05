@@ -42,8 +42,8 @@ switch (Astro.request.method) {
         body.get("email") as string
       );
       const targetUserAuth = await targetUser.getAuth();
-      if (targetUserAuth !== null && !targetUserAuth.isEmailVerified)
-        await targetUser.issueEmailVerificationCode(targetUserAuth.email);
+      if (targetUserAuth !== null && targetUserAuth.isEmailVerified)
+        await targetUser.issuePasswordResetMail();
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         switch (e.code) {
@@ -78,12 +78,11 @@ if (Astro.request.method === "GET" || formInvalid) {
   {
     Astro.request.method === "GET" || formInvalid ? (
       <>
-        <h1>Issue email verification</h1>
+        <h1>Account password reset</h1>
         {formInvalid && <p>{formErrorMessage}</p>}
         <p>
-          If your e-mail address has not been verified and you would like the
-          e-mail to be resent, please enter your e-mail address in the form
-          below.
+          If you have forgotten your account password, you can apply using the
+          form below. You must have verified your email address.
         </p>
         <form method="post">
           <input
@@ -119,8 +118,8 @@ if (Astro.request.method === "GET" || formInvalid) {
     ) : (
       <>
         <p>
-          If the entered email address is correct and unverified, the email
-          address will be sent. Please check your Inbox.
+          If the email address you entered is correct, we will send you
+          instructions on how to reset your password.
         </p>
       </>
     )

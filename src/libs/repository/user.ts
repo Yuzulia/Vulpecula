@@ -6,6 +6,7 @@ import {
   generateKeyPairAsync,
   createSessionToken,
   createEmailVerifyToken,
+  createPasswordResetToken,
 } from "../utils";
 import { databaseClient } from "../database";
 import { redisClient } from "../redis";
@@ -330,6 +331,9 @@ export class UserManager {
   async issueEmailVerificationCode(
     newEmail: string
   ): Promise<SMTPPool.SentMessageInfo> {
+    if (!this.isLocalUser)
+      throw new UserManagerError("Remote user is not supported");
+
     const token = await createEmailVerifyToken();
     const key = `emailToken:${token}`;
     await redisClient.hSet(key, "email", newEmail);
@@ -386,9 +390,55 @@ export class UserManager {
     return true;
   }
 
-  async changePassword(newPassword: string): Promise<void> {
+  async issuePasswordResetMail(): Promise<SMTPPool.SentMessageInfo | null> {
     if (!this.isLocalUser)
       throw new UserManagerError("Remote user is not supported");
+    const userAuth = await this.getAuth();
+    if (userAuth === null) throw new UserManagerError("User auth is null");
+    if (!userAuth.isEmailVerified) return null;
+
+    const token = await createPasswordResetToken();
+    const key = `passwordReset:${token}`;
+    await redisClient.set(key, this.user.id);
+    await redisClient.expire(key, 900);
+
+    const em = new EmailSender(userAuth.email);
+    const template = await TemplateEngine.load("reset-password.handlebars");
+    const verifyUrl = new URL(
+      `/account/reset/${token}`,
+      import.meta.env.VULPECULA_BASE_URL
+    );
+    const templateText = template.render({
+      email: userAuth.email,
+      verifyUrl,
+      url: import.meta.env.VULPECULA_BASE_URL,
+    });
+
+    return await em.send("Vulpecula: Password reset", {
+      text: templateText,
+    });
+  }
+
+  static async fromPasswordResetToken(token: string): Promise<UserManager> {
+    const key = `passwordReset:${token}`;
+    const userId = await redisClient.get(key);
+    if (userId === null) throw new UserManagerError("Unknown reset token");
+    return await UserManager.fromId(userId);
+  }
+
+  static async revokePasswordResetToken(token: string): Promise<void> {
+    const key = `passwordReset:${token}`;
+    await redisClient.del(key);
+  }
+
+  async changePassword(
+    newPassword: string,
+    sendMessage: boolean = true
+  ): Promise<SMTPPool.SentMessageInfo | null> {
+    if (!this.isLocalUser)
+      throw new UserManagerError("Remote user is not supported");
+    const userAuth = await this.getAuth();
+    if (userAuth === null) throw new UserManagerError("User auth is null");
     const hashedNewPassword = await generatePasswordHash(newPassword);
     await databaseClient.userAuth.update({
       where: {
@@ -398,6 +448,20 @@ export class UserManager {
         password: hashedNewPassword,
       },
     });
+
+    if (sendMessage && userAuth.isEmailVerified) {
+      const template = await TemplateEngine.load("password-changed.handlebars");
+      const templateText = template.render({
+        email: userAuth.email,
+        url: import.meta.env.VULPECULA_BASE_URL,
+      });
+      const es = new EmailSender(userAuth.email);
+      return await es.send("Vulpecula: Password Changed", {
+        text: templateText,
+      });
+    }
+
+    return null;
   }
 }
 

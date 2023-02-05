@@ -1,0 +1,97 @@
+---
+import { Prisma } from "@prisma/client";
+import CommonLayout from "../../../layouts/CommonLayout.astro";
+import {
+  CsrfManager,
+  DEFAULT_CSRF_TOKEN_NAME,
+} from "../../../libs/repository/csrf";
+import { UserManager, UserManagerError } from "../../../libs/repository/user";
+import { csrfVerify } from "../../../libs/utils";
+
+const { token } = Astro.params;
+let targetUser: UserManager | undefined;
+let csrfToken = "";
+let formInvalid = false;
+
+if (token === undefined)
+  return new Response(null, {
+    status: 404,
+    statusText: "Not Found",
+  });
+
+try {
+  targetUser = await UserManager.fromPasswordResetToken(token);
+
+  switch (Astro.request.method) {
+    case "GET": {
+      break;
+    }
+    case "POST": {
+      const body = await Astro.request.formData();
+      const cvr = await csrfVerify(body);
+      if (cvr !== null) return cvr;
+      if (!body.has("password")) {
+        formInvalid = true;
+        break;
+      }
+      await targetUser.changePassword(body.get("password") as string, true);
+      await UserManager.revokePasswordResetToken(token);
+      break;
+    }
+    default: {
+      return new Response(null, {
+        status: 405,
+        statusText: "Method Not Allowed",
+      });
+    }
+  }
+  if (Astro.request.method === "GET" || formInvalid) {
+    const cm = new CsrfManager();
+    csrfToken = await cm.generateToken();
+  }
+} catch (e) {
+  if (e instanceof UserManagerError) {
+    // break
+  } else if (e instanceof Prisma.PrismaClientKnownRequestError) {
+    switch (e.code) {
+      case "P2025": {
+        break;
+      }
+      default: {
+        throw e;
+      }
+    }
+  } else {
+    throw e;
+  }
+}
+---
+
+<CommonLayout>
+  {
+    targetUser !== undefined ? (
+      <>
+        {Astro.request.method === "GET" || formInvalid ? (
+          <>
+            <h1>Password reset</h1>
+            <form method="post">
+              <input type="password" name="password" />
+              <input
+                type="hidden"
+                name={DEFAULT_CSRF_TOKEN_NAME}
+                value={csrfToken}
+              />
+              <input type="submit" />
+            </form>
+          </>
+        ) : (
+          <p>Password change successfully.</p>
+        )}
+      </>
+    ) : (
+      <>
+        <p>Password reset token is invalid.</p>
+      </>
+    )
+  }
+</CommonLayout>
