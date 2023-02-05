@@ -9,7 +9,9 @@ export class TemplateEngine {
   }
 
   static async load(templatePath: string): Promise<TemplateEngine> {
-    const templateFile = await import(`../templates/${templatePath}.handlebars?raw`);
+    const templateFile = await import(
+      `../templates/${templatePath}.handlebars?raw`
+    );
     return new TemplateEngine(templateFile.default);
   }
 
