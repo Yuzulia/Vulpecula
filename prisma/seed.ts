@@ -1,5 +1,5 @@
-import { ulid } from "ulid";
 import { PrismaClient } from "@prisma/client";
+import { IdGeneratorManager } from "../src/libs/utils";
 
 const prisma = new PrismaClient();
 await prisma.$connect();
@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     },
     update: {},
     create: {
-      id: ulid(),
+      id: IdGeneratorManager.generate().id,
       fqdn: ".",
     },
   });
